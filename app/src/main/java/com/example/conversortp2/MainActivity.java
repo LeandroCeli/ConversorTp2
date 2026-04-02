@@ -2,6 +2,7 @@ package com.example.conversortp2;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,14 +20,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 🔹 Inicializar binding
+        // 🔹 Binding
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         // 🔹 ViewModel
         viewModel = new ViewModelProvider(this).get(ConversorViewModel.class);
 
-        // 🔹 OBSERVAR LiveData
+        // 🔹 Observers
         viewModel.getResultado().observe(this, resultado -> {
             binding.tvResultado.setText(resultado);
         });
@@ -40,34 +41,67 @@ public class MainActivity extends AppCompatActivity {
 
             String valorTexto = binding.etValor.getText().toString();
 
+            // Validar vacío
             if (TextUtils.isEmpty(valorTexto)) {
                 Toast.makeText(this, "Ingrese un valor", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            double valor = Double.parseDouble(valorTexto);
-
-            if (binding.rbUSD.isChecked()) {
-                viewModel.convertir(valor, true);
-            } else if (binding.rbEUR.isChecked()) {
-                viewModel.convertir(valor, false);
-            } else {
-                Toast.makeText(this, "Seleccione tipo de conversión", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // 🔹 Botón Cambiar valor
-        binding.btnCambiar.setOnClickListener(v -> {
-
-            String nuevoValor = binding.etValor.getText().toString();
-
-            if (TextUtils.isEmpty(nuevoValor)) {
-                Toast.makeText(this, "Ingrese nuevo tipo de cambio", Toast.LENGTH_SHORT).show();
+            // Validar número
+            double valor;
+            try {
+                valor = Double.parseDouble(valorTexto);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Ingrese un número válido", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            double valor = Double.parseDouble(nuevoValor);
-            viewModel.cambiarTipoCambio(valor);
+            // Validar selección
+            if (!binding.rbUSD.isChecked() && !binding.rbEUR.isChecked()) {
+                Toast.makeText(this, "Seleccione tipo de conversión", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Ejecutar conversión
+            if (binding.rbUSD.isChecked()) {
+                viewModel.convertir(valor, true);
+            } else {
+                viewModel.convertir(valor, false);
+            }
+
+            // Limpiar input (mejora UX)
+            binding.etValor.setText("");
+        });
+
+        // 🔹 Botón Cambiar tipo de cambio (con diálogo)
+        binding.btnCambiar.setOnClickListener(v -> {
+
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("Nuevo tipo de cambio");
+
+            final EditText input = new EditText(this);
+            input.setHint("Ej: 0.95");
+            builder.setView(input);
+
+            builder.setPositiveButton("Aceptar", (dialog, which) -> {
+
+                String valorTexto = input.getText().toString();
+
+                if (TextUtils.isEmpty(valorTexto)) {
+                    Toast.makeText(this, "Ingrese un valor", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                try {
+                    double nuevoValor = Double.parseDouble(valorTexto);
+                    viewModel.cambiarTipoCambio(nuevoValor);
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Número inválido", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            builder.setNegativeButton("Cancelar", null);
+            builder.show();
         });
     }
 }

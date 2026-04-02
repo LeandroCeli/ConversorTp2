@@ -4,9 +4,8 @@ public class Conversor {
 
     private double tipoCambio = 0.90; // por defecto
 
-    public Conversor(double tipoInicial) {
-        this.tipoCambio = tipoInicial;
-    }
+
+
 
     // Convertir USD a EUR
     public double convertirUsdAEur(double usd) {

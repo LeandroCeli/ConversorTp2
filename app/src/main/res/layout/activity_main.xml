@@ -19,6 +19,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="16dp">
 
+
         <!-- Input -->
         <EditText
             android:id="@+id/etValor"
